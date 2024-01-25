@@ -1,13 +1,27 @@
 #!/usr/bin/env bash
 
+# Function to display messages in bold blue
+display_message() {
+    echo -e "\e[1;34m$1\e[0m"
+}
+
+# Start of the specific task
+display_message "[INFO] Changing directory to cairo-verifier..."
 cd cairo-verifier
-echo -e "\e[34mBuilding and running cargo...\e[0m"
+
+# Building and Running Cargo
+display_message "[INFO] Building and running cargo..."
 scarb build && \
 cargo run --release -- ./target/dev/cairo_verifier.sierra.json < ../resources/proof.txt
-if [ $? -eq 0 ]
-then
-  echo -e "\e[34mSuccessfully verified proof.\e[0m"
+
+# Checking the result of the cargo run
+if [ $? -eq 0 ]; then
+    display_message "[SUCCESS] Successfully verified proof."
 else
-  echo -e "\e[34mFailed to verify proof.\e[0m"
+    display_message "[ERROR] Failed to verify proof."
+    exit 1
 fi
+
+# Returning to the previous directory
+display_message "[INFO] Changing directory back to parent..."
 cd ..

@@ -1,37 +1,69 @@
 #!/usr/bin/env bash
 
-echo -e "\e[34mStarting the script...\e[0m"
+# Function to display messages in bold blue
+display_message() {
+    echo -e "\e[1;34m$1\e[0m"
+}
 
-echo -e "\e[34mBuilding Docker image...\e[0m"
+# Start of the script
+display_message "[START] Starting the script..."
+
+# Building Docker Image
+display_message "[INFO] Building Docker image..."
 docker build --tag prover ./stone-prover
-echo -e "\e[34mDocker image built successfully.\e[0m"
+if [ $? -eq 0 ]; then
+    display_message "[SUCCESS] Docker image built successfully."
+else
+    display_message "[ERROR] Docker image build failed."
+    exit 1
+fi
 read -p "Press enter to continue"
 
-echo -e "\e[34mCreating Docker container...\e[0m"
+# Creating Docker Container
+display_message "[INFO] Creating Docker container..."
 container_id=$(docker create prover)
-echo -e "\e[34mDocker container created with ID: $container_id\e[0m"
+if [ -z "$container_id" ]; then
+    display_message "[ERROR] Docker container creation failed."
+    exit 1
+else
+    display_message "[SUCCESS] Docker container created with ID: $container_id"
+fi
 
-echo -e "\e[34mCopying cpu_air_prover from Docker container to local resources...\e[0m"
+# Copying from Docker Container
+display_message "[INFO] Copying cpu_air_prover from Docker container to local resources..."
 docker cp -L ${container_id}:/bin/cpu_air_prover ./resources/
-echo -e "\e[34mCopy completed for cpu_air_prover.\e[0m"
+if [ $? -eq 0 ]; then
+    display_message "[SUCCESS] Copy completed for cpu_air_prover."
+else
+    display_message "[ERROR] Copy failed for cpu_air_prover."
+    exit 1
+fi
 
-echo -e "\e[34mCopying cpu_air_verifier from Docker container to local resources...\e[0m"
+display_message "[INFO] Copying cpu_air_verifier from Docker container to local resources..."
 docker cp -L ${container_id}:/bin/cpu_air_verifier ./resources/
-echo -e "\e[34mCopy completed for cpu_air_verifier.\e[0m"
+if [ $? -eq 0 ]; then
+    display_message "[SUCCESS] Copy completed for cpu_air_verifier."
+else
+    display_message "[ERROR] Copy failed for cpu_air_verifier."
+    exit 1
+fi
 read -p "Press enter to continue"
 
+# Cairo-lang Installation
+display_message "[INFO] Activating virtual environment and installing cairo-lang..."
 source .venv/bin/activate
 pip install --upgrade pip
 pip install cairo-lang/cairo-lang-0.12.0
 
-echo -e "\e[34mChanging directory to resources...\e[0m"
+# Compiling and Running Cairo Program
+display_message "[INFO] Changing directory to resources..."
 cd ./resources
 
-echo -e "\e[34mCompiling Cairo program...\e[0m"
+display_message "[INFO] Compiling Cairo program..."
 cairo-compile main.cairo --output main_compiled.json --proof_mode
-echo -e "\e[34mCairo program compiled.\e[0m"
+display_message "[SUCCESS] Cairo program compiled."
 
-echo -e "\e[34mRunning Cairo program...\e[0m"
+display_message "[INFO] Running Cairo program..."
 cairo-run \
     --program=main_compiled.json \
     --layout=recursive \
@@ -42,9 +74,9 @@ cairo-run \
     --memory_file=main_memory.json \
     --print_output \
     --proof_mode
-echo -e "\e[34mCairo program run completed.\e[0m"
+display_message "[SUCCESS] Cairo program run completed."
 
-echo -e "\e[34mRunning cpu_air_prover...\e[0m"
+display_message "[INFO] Running cpu_air_prover..."
 ./cpu_air_prover \
     --out_file=main_proof.json \
     --private_input_file=main_private_input.json \
@@ -52,42 +84,39 @@ echo -e "\e[34mRunning cpu_air_prover...\e[0m"
     --prover_config_file=cpu_air_prover_config.json \
     --parameter_file=cpu_air_params.json \
     -generate_annotations
-echo -e "\e[34mcpu_air_prover execution completed.\e[0m"
+display_message "[SUCCESS] cpu_air_prover execution completed."
 
-echo -e "\e[34mChanging directory back to parent...\e[0m"
+display_message "[INFO] Changing directory back to parent and deactivating virtual environment..."
 cd ..
 deactivate
 read -p "Press enter to continue"
 
-echo -e "\e[34mChanging directory to cairo-lang...\e[0m"
+# Running Python Script in cairo-lang Directory
+display_message "[INFO] Changing directory to cairo-lang and running python parser..."
 cd cairo-lang
 source .venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
-echo -e "\e[34mRunning python script...\e[0m"
 python src/main.py -l recursive < ../resources/main_proof.json > ../resources/proof.txt
-echo -e "\e[34mPython script execution completed.\e[0m"
+display_message "[SUCCESS] Python script execution completed."
 
-echo -e "\e[34mChanging directory back to parent...\e[0m"
+display_message "[INFO] Changing directory back to parent and deactivating virtual environment..."
 deactivate
 cd ..
 read -p "Press enter to continue"
 
-echo -e "\e[34mChanging directory to cairo-verifier...\e[0m"
+# Building and Running Cargo in cairo-verifier
+display_message "[INFO] Changing directory to cairo-verifier and building cargo..."
 cd cairo-verifier
-
-echo -e "\e[34mBuilding and running cargo...\e[0m"
 scarb build && \
 cargo run --release -- ./target/dev/cairo_verifier.sierra.json < ../resources/proof.txt
-if [ $? -eq 0 ]
-then
-  echo -e "\e[34mSuccessfully verified proof.\e[0m"
+if [ $? -eq 0 ]; then
+    display_message "[SUCCESS] Successfully verified proof."
 else
-  echo -e "\e[34mFailed to verify proof.\e[0m"
+    display_message "[ERROR] Failed to verify proof."
+    exit 1
 fi
-read -p "Press enter to continue"
-
-echo -e "\e[34mChanging directory back to parent...\e[0m"
 cd ..
 
-echo -e "\e[34mScript execution completed.\e[0m"
+# End of the script
+display_message "[END] Script execution completed."
