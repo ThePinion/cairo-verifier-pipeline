@@ -20,6 +20,7 @@ source .venv/bin/activate
    This project requires a modified version of cairo-lang. Install it using the following command:
 
 ```bash
+pip install --upgrade pip
 pip install cairo-lang/cairo-lang-0.12.0
 ```
 
