@@ -91,25 +91,11 @@ cd ..
 deactivate
 read -p "Press enter to continue"
 
-# Running Python Script in cairo-lang Directory
-display_message "[INFO] Changing directory to cairo-lang and running python parser..."
-cd cairo-lang
-source .venv/bin/activate
-pip install --upgrade pip
-pip install -r requirements.txt
-python src/main.py -l recursive < ../resources/main_proof.json > ../resources/proof.txt
-display_message "[SUCCESS] Python script execution completed."
-
-display_message "[INFO] Changing directory back to parent and deactivating virtual environment..."
-deactivate
-cd ..
-read -p "Press enter to continue"
-
 # Building and Running Cargo in cairo-verifier
 display_message "[INFO] Changing directory to cairo-verifier and building cargo..."
 cd cairo-verifier
 scarb build && \
-cargo run --release -- ./target/dev/cairo_verifier.sierra.json < ../resources/proof.txt
+cargo run --release -- verify ./target/dev/cairo_verifier.sierra.json < ../resources/main_proof.json
 if [ $? -eq 0 ]; then
     display_message "[SUCCESS] Successfully verified proof."
 else

@@ -30,3 +30,10 @@ pip install cairo-lang/cairo-lang-0.12.0
 ```bash
 ./run.sh
 ```
+
+## cairo-verifier
+The ```runner``` crate parses the generated ```resources/main_proof.json``` and passes the parsed Felt252 array as arguments to ```cairo_args_runner``` which loads and runns a verifier written in cairo. To only see the parsed output run:
+```bash
+cd cairo-verifier
+cargo run --release -- parse ../resources/main_proof.json
+``` 

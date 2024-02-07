@@ -12,7 +12,7 @@ cd cairo-verifier
 # Building and Running Cargo
 display_message "[INFO] Building and running cargo..."
 scarb build && \
-cargo run --release -- ./target/dev/cairo_verifier.sierra.json < ../resources/proof.txt
+cargo run --release -- verify ./target/dev/cairo_verifier.sierra.json < ../resources/main_proof.json
 
 # Checking the result of the cargo run
 if [ $? -eq 0 ]; then
